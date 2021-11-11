@@ -4,11 +4,6 @@ import numpy as np
 
 random.seed()
 
-
-# class nodeType(enum.Enum):
-#     NoInterest = 0
-#     Goal = 1
-#     Loc = 1
     
 
 class environment():
@@ -25,8 +20,8 @@ class environment():
         return True
 
     def reset(self): #Dette retunere en specifik state. Skal ændres senere.
-        thing = np.array([1,1,0,1,0, 
-                          0,0,1,0,0])
+        thing = np.array([0,0,0,0,0,0,0,0,1, 
+                          1,0,0,0,0,0,0,0,0])
         return thing
 
     def randomReset(self, maxGoals, alwaysCapGoals = False):

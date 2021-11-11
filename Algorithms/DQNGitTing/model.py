@@ -11,11 +11,11 @@ class DQNNet(nn.Module):
     """
     Class that defines the architecture of the neural network for the DQN agent
     """
-    def __init__(self, input_size = 10, output_size = 2, lr=1e-3):
+    def __init__(self, input_size = 18, output_size = 4, lr=1e-3):
         super(DQNNet, self).__init__()
-        self.dense1 = nn.Linear(input_size, 10)
-        self.dense2 = nn.Linear(10, 10)
-        self.dense3 = nn.Linear(10, output_size)
+        self.dense1 = nn.Linear(input_size, 2000)
+        self.dense2 = nn.Linear(2000, 1000)
+        self.dense3 = nn.Linear(1000, output_size)
 
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
@@ -26,7 +26,7 @@ class DQNNet(nn.Module):
         #  x Kunne være [0.5 , 0.8]
         return x
 
-    def save_model(self, textFileName = 'model.txt', filename = './saveModel/model.txt'):#Virker måske ikke. 
+    def save_model(self, fileName): 
         """
         Function to save model parameters
 
@@ -39,10 +39,10 @@ class DQNNet(nn.Module):
         ---
         none
         """
+        f = open(fileName, "w") #Dette burde lave den givne fil, hvis ikke findes. 
+        torch.save(self.state_dict(), fileName)
 
-        torch.save(self.state_dict(), filename + textFileName)
-
-    def load_model(self, device, textFileName = 'model.txt', filename = './saveModel/'):
+    def load_model(self, device, fileName):
         """
         Function to load model parameters
 
@@ -59,6 +59,6 @@ class DQNNet(nn.Module):
         """
 
         # map_location is required to ensure that a model that is trained on GPU can be run even on CPU
-        self.load_state_dict(torch.load(filename + textFileName, map_location=device))
+        self.load_state_dict(torch.load(fileName, map_location=device))
 
 

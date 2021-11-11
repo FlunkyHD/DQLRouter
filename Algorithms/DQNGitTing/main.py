@@ -1,7 +1,7 @@
 """
 Script containing the training and testing loop for DQNAgent
 """
-
+import sys
 import os
 import csv
 import argparse
@@ -18,7 +18,7 @@ import torch
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # While loop should probably be changed to a counting loop where done is not the condition. 
-def fill_memory(env, dqn_agent, num_memory_fill_eps):
+def fill_memory(env, dqn_agent, num_memory_fill_eps, randomReset, maxGoals, alwaysCapGoals, resetState):
     """
     Function that performs a certain number of episodes of random interactions
     with the environment to populate the replay buffer
@@ -39,8 +39,12 @@ def fill_memory(env, dqn_agent, num_memory_fill_eps):
 
     for _ in range(num_memory_fill_eps):
         done = False
-        #state = env.reset()
-        state = env.randomReset(1, False)
+        state = []
+        if(randomReset) :
+            state = env.randomReset(maxGoals=maxGoals, alwaysCapGoals=alwaysCapGoals)
+        else : 
+            state = env.reset(resetState)
+            
         while not done:
             action = env.sampleAction()
             next_state, reward, done = env.step(state,action)
@@ -52,7 +56,8 @@ def fill_memory(env, dqn_agent, num_memory_fill_eps):
             state = next_state
 
 
-def train(env, dqn_agent, num_train_eps, num_memory_fill_eps, update_frequency, batchsize, results_basepath="NO"):
+def train(env, dqn_agent, num_train_eps, num_memory_fill_eps, update_frequency, batchsize, 
+          filePath, fileName, randomReset, maxGoals, alwaysCapGoals):
     """
     Function to train the agent
 
@@ -79,8 +84,9 @@ def train(env, dqn_agent, num_train_eps, num_memory_fill_eps, update_frequency, 
     ---
     none
     """
-
-    fill_memory(env, dqn_agent, num_memory_fill_eps)
+#def fill_memory(env, dqn_agent, num_memory_fill_eps, randomReset, maxGoals, alwaysCapGoals, resetState):
+    
+    fill_memory(env, dqn_agent, num_memory_fill_eps, randomReset, maxGoals, alwaysCapGoals, randomReset)
     print('Memory filled. Current capacity: ', len(dqn_agent.memory))
     
     reward_history = []
@@ -93,8 +99,11 @@ def train(env, dqn_agent, num_train_eps, num_memory_fill_eps, update_frequency, 
         epsilon_history.append(dqn_agent.epsilon)
 
         done = False
-        state = env.randomReset(1, False)
-        #state = env.reset()
+        state = []
+        if(randomReset) :
+            state = env.randomReset(maxGoals=maxGoals, alwaysCapGoals=alwaysCapGoals)
+        else : 
+            state = env.reset(randomReset)
 
         ep_score = 0
 
@@ -118,14 +127,15 @@ def train(env, dqn_agent, num_train_eps, num_memory_fill_eps, update_frequency, 
 
         reward_history.append(ep_score)
         current_avg_score = np.mean(reward_history[-100:]) # moving average of last 100 episodes
+        if doPrint != 0 :
+            if ep_cnt % doPrint == 0:  
+                print('Ep: {}, Total Steps: {}, Ep: Score: {}, Avg score: {}; Epsilon: {}'.format(ep_cnt, step_cnt, ep_score, current_avg_score, epsilon_history[-1]))
 
-        print('Ep: {}, Total Steps: {}, Ep: Score: {}, Avg score: {}; Epsilon: {}'.format(ep_cnt, step_cnt, ep_score, current_avg_score, epsilon_history[-1]))
-        
         if current_avg_score <= best_score:
             # dqn_agent.save_model('{}/dqn_model'.format(results_basepath))
             best_score = current_avg_score
-        if(ep_cnt % 100 == 0) :
-            dqn_agent.save_model('NotWorkingSimpleNetwork.txt')
+        if( ep_cnt > 0 ) : #and ep_cnt % 100 == 0
+            dqn_agent.save_model(fileName=fileName, filePath=filePath)
             
 
 def testRandomTestsReturnAverage(env, dqnAgent, maxGoal, alwaysCapGoals = False, numberOfTests = 100) :
@@ -136,7 +146,8 @@ def testRandomTestsReturnAverage(env, dqnAgent, maxGoal, alwaysCapGoals = False,
     for i in range(numberOfTests):
 
         done = False
-        state = env.randomReset(maxGoal, alwaysCapGoals)
+        #state = env.randomReset(maxGoal, alwaysCapGoals)
+        state = env.reset()
         step_cnt = 0
 
         ep_score = 0
@@ -189,8 +200,8 @@ def test(env, dqn_agent, num_test_eps, seed, results_basepath="no"):
     for ep in range(num_test_eps):
         score = 0
         done = False
-        state = env.randomReset(1, False)
-        #state = env.reset()
+        #state = env.randomReset(1, False)
+        state = env.reset()
         while not done:
 
             action = dqn_agent.select_action(state)
@@ -203,59 +214,192 @@ def test(env, dqn_agent, num_test_eps, seed, results_basepath="no"):
         reward_history.append(score)
         print('Ep: {}, Score: {}'.format(ep, score))
 
-    with open('{}/test_reward_history_{}.pkl'.format(results_basepath, seed), 'wb') as f:
-        pickle.dump(reward_history, f)
+   # with open('{}/test_reward_history_{}.pkl'.format(results_basepath, seed), 'wb') as f:
+        #pickle.dump(reward_history, f)
         
+def makeLeftRightGraph() :
+    graph = []
+    node0 = Node(False, 0)
+    node1 = Node(False, 1)
+    node2 = Node(False, 2)
+    node3 = Node(False, 3)
+    node4 = Node(False, 4)
+    
+    node0.addConnection(Road(1000,node0))
+    node0.addConnection(Road(2,node1))
+    node1.addConnection(Road(2,node0))
+    node1.addConnection(Road(2,node2))
+    node2.addConnection(Road(2,node1))
+    node2.addConnection(Road(2,node3))
+    node3.addConnection(Road(2,node2))
+    node3.addConnection(Road(2,node4))
+    node4.addConnection(Road(2,node3))
+    node4.addConnection(Road(1000,node4))
+
+    graph.append(node0)
+    graph.append(node1)
+    graph.append(node2)
+    graph.append(node3)
+    graph.append(node4)
+    return graph
+
+def makeGridGraph() :
+    graph = []
+    node0 = Node(False, 0)
+    node1 = Node(False, 1)
+    node2 = Node(False, 2)
+    node3 = Node(False, 3)
+    node4 = Node(False, 4)
+    node5 = Node(False, 5)
+    node6 = Node(False, 6)
+    node7 = Node(False, 7)
+    node8 = Node(False, 8)
+    
+    node0.addConnection(Road(1000,node0))
+    node0.addConnection(Road(1000,node0))
+    node0.addConnection(Road(2,node1))
+    node0.addConnection(Road(2,node3))
+    
+    node1.addConnection(Road(2,node0))
+    node1.addConnection(Road(1000,node1))
+    node1.addConnection(Road(2,node2))
+    node1.addConnection(Road(2,node4))
+    
+    node2.addConnection(Road(2,node1))
+    node2.addConnection(Road(1000,node2))
+    node2.addConnection(Road(1000,node2))
+    node2.addConnection(Road(2,node5))
+    
+    node3.addConnection(Road(1000,node3))
+    node3.addConnection(Road(2,node0))
+    node3.addConnection(Road(2,node4))
+    node3.addConnection(Road(2,node6))
+    
+    node4.addConnection(Road(2,node3))
+    node4.addConnection(Road(2,node1))
+    node4.addConnection(Road(2,node5))
+    node4.addConnection(Road(2,node7))
+    
+    node5.addConnection(Road(2,node4))
+    node5.addConnection(Road(2,node2))
+    node5.addConnection(Road(1000,node5))
+    node5.addConnection(Road(2,node8))
+    
+    node6.addConnection(Road(1000,node6))
+    node6.addConnection(Road(2,node3))
+    node6.addConnection(Road(2,node7))
+    node6.addConnection(Road(1000,node6))
+    
+    node7.addConnection(Road(2,node6))
+    node7.addConnection(Road(2,node4))
+    node7.addConnection(Road(2,node8))
+    node7.addConnection(Road(1000,node7))
+
+    node8.addConnection(Road(2,node7))
+    node8.addConnection(Road(2,node5))
+    node8.addConnection(Road(1000,node8))
+    node8.addConnection(Road(1000,node8))
+    
+    graph.append(node0)
+    graph.append(node1)
+    graph.append(node2)
+    graph.append(node3)
+    graph.append(node4)
+    graph.append(node5)
+    graph.append(node6)
+    graph.append(node7)
+    graph.append(node8)
+    
+    return graph
+    
+def procesInput(input) : 
+    doPrint = 1
+    maxGoals = 2
+    graph = []
+    whichGraph= "Grid"
+    actionsSpace = 4
+    fileName = ""
+
+    if(len(input) <= 7) :
+        print("Wrong amount of inputs: THe format is: Print: which is how often it prints(0-ininity)\n",
+              "Graph, which specifies the graph being run(Grid, LeftRight).\n",
+              "MaxGoals, which specifies the max amount of goals(1-len(graph)). Have to be above 0 and under the max number of nodes\n", 
+              "FileName, Which says which file should be used(model.txt)\n",
+              "RandomRest, which specifies wither it learns based on the same input, or it learns with random locatino and destinations(True, [0,0,1,0,0,1,0,0,0,0]\n", 
+              "MaxGoalCap, is a boolean, on weither the startstate should consists of the same amount of goals, or be random",
+              "LoadModel, wither it should load a given model, or start from a new(no, filename.txt)", 
+              "A default call is: 1000 Grid 6 GridNetwork.txt True False no")
+        exit()
+    
+    doPrint = int(input[1])
+        
+    if len(input) >= 2 :
+        whichGraph = input[2]
+
+    if(whichGraph == "Grid") :
+        graph = makeGridGraph()
+        actionsSpace = 4
+    elif whichGraph == "leftRight" :
+        graph = makeLeftRightGraph()
+        actionsSpace = 2
+    else :
+        print("Wrong second input, it was not a known graph")
+        exit()
+        
+    maxGoals = int(input[3])    
+    fileName = input[4]
+    if(input[5] == "True") :
+        randomReset = bool(input[5])
+    else : 
+        randomReset = input[5]
+        
+
+    alwaysCapGoals = bool(input[6])
+    print(input, "Test")
+    
+    loadModel = input[7]
+        
+        
+    return doPrint, graph, maxGoals, actionsSpace, fileName, randomReset, alwaysCapGoals, loadModel
+
 
 if __name__ ==  '__main__':
+    filePath = "./Algorithms/DQNGitTing/saveModel/" #Virker nødevendigt. 
+    doPrint, graph, maxGoals, actionsSpace, fileName, randomReset, alwaysCapGoals, loadModel = procesInput(sys.argv)
 
-        np.random.seed()
-        torch.manual_seed(1)
-        
-        graph = []
-        node0 = Node(False, 0)
-        node1 = Node(False, 1)
-        node2 = Node(False, 2)
-        node3 = Node(False, 3)
-        node4 = Node(False, 4)
-        
-        node0.addConnection(Road(1000,node0))
-        node0.addConnection(Road(2,node1))
-        node1.addConnection(Road(2,node0))
-        node1.addConnection(Road(2,node2))
-        node2.addConnection(Road(2,node1))
-        node2.addConnection(Road(2,node3))
-        node3.addConnection(Road(2,node2))
-        node3.addConnection(Road(2,node4))
-        node4.addConnection(Road(2,node3))
-        node4.addConnection(Road(1000,node4))
-
-        graph.append(node0)
-        graph.append(node1)
-        graph.append(node2)
-        graph.append(node3)
-        graph.append(node4)
-
-        actionsSpace = 2
-
-        env = environment(graph, actionsSpace)
-        dqn_agent = DQNAgent(device, 
-                                inputSize=len(graph) * 2, 
-                                actionSize=actionsSpace, 
-                                discount= 0.99, 
-                                train_mode=True)
-        dqn_agent.load_model(textFileName="NotWorkingSimpleNetwork.txt")
-        
-        train(env=env, 
-                dqn_agent=dqn_agent, 
-                # results_basepath=args.results_folder, 
-                num_train_eps=20000, 
-                num_memory_fill_eps=200, 
-                update_frequency=20,
-                batchsize=5)
-
-        testRandomTestsReturnAverage(env, dqn_agent, 1, alwaysCapGoals = False, numberOfTests = 100)
     
+    np.random.seed()
+    torch.manual_seed(1)
     
+    env = environment(graph, actionsSpace)
     
+    dqn_agent = DQNAgent(device, 
+                            inputSize=len(graph) * 2, 
+                            actionSize=actionsSpace, 
+                            discount= 0.5, 
+                            train_mode=True, 
+                            eps_min = 0.01,
+                            eps_max= 1)
+    if(loadModel != 'no') :
+        dqn_agent.load_model(textFileName=loadModel)
     
+    train(env=env, 
+            dqn_agent=dqn_agent, 
+            # results_basepath=args.results_folder, 
+            num_train_eps=1000, 
+            num_memory_fill_eps=200, 
+            update_frequency=20,
+            batchsize=5, 
+            fileName=fileName,
+            filePath=filePath, 
+            randomReset=randomReset, 
+            maxGoals=maxGoals, 
+            alwaysCapGoals=alwaysCapGoals)
+    
+#def train(env, dqn_agent, num_train_eps, num_memory_fill_eps, update_frequency, batchsize, 
+#          filePath, fileName, randomReset, maxGoals, resetState):
+
+  #  testRandomTestsReturnAverage(env, dqn_agent, 1, alwaysCapGoals = False, numberOfTests = 100)
+
+
+

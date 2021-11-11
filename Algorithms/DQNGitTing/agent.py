@@ -17,7 +17,7 @@ class DQNAgent:
     """
     Class that defines the functions required for training the DQN agent
     """
-    def __init__(self, device, inputSize = 10, actionSize = 2, 
+    def __init__(self, device, inputSize = 18, actionSize = 4, 
                     discount=1.01,    
                     eps_max=1.0, 
                     eps_min=0.01, 
@@ -40,8 +40,8 @@ class DQNAgent:
         self.actionSize = actionSize
 
         # instances of the network for current policy and its target
-        self.onlineNet = DQNNet(self.inputSize, self.actionSize, lr).to(self.device)
-        self.targetNet = DQNNet(self.inputSize, self.actionSize, lr).to(self.device)
+        self.onlineNet = DQNNet(input_size=self.inputSize, output_size=self.actionSize, lr=lr).to(self.device)
+        self.targetNet = DQNNet(input_size=self.inputSize, output_size=self.actionSize, lr=lr).to(self.device)
         self.targetNet.eval() # since no learning is performed on the target net
         
         if not train_mode:
@@ -98,6 +98,16 @@ class DQNAgent:
 
         if random.random() <= self.epsilon: # amount of exploration reduces with the epsilon value
             return random.randrange(self.actionSize)
+        # count5Correct = 0
+        # count5Wrong = 0
+        # count7Correct=0
+        # count7Wrong=0
+        # flag5 = False
+        # flag7 = False
+        # if state[14] == 1: 
+        #     flag5 = True
+        # if state[16] == 1: 
+        #     flag7 = True
 
         if not torch.is_tensor(state):
             # np.array()
@@ -106,10 +116,35 @@ class DQNAgent:
         # pick the action with maximum Q-value as per the policy Q-network
         with torch.no_grad():
             action = self.onlineNet.forward(state)
+        # if flag5 : 
+        #     print("   Statt 5    ")
+        #     print("   Q_table:\n    ", action)
+        #     if( action[0][2] < action[0][3]) :
+        #         count5Correct += 1
+        #     else :
+        #         count5Wrong += 1
+        #     print(count5Correct, count5Wrong)
+            
+        # if flag7 : 
+        #     print("   Statt 7    ")
+        #     print("   Q_table:\n    ", action)
+        #     if( action[0][2] > action[0][3]) :
+        #         count7Correct += 1
+        #     else : 
+        #         count7Wrong += 1
+        #     print(count7Correct, count7Wrong)
+
+        
+
+        #print(action)
         #print(action)
         #ting = torch.argmax(action).item()
         #print(ting)
-        return torch.argmin(action).item() # since actions are discrete, return index that has highest Q
+        tingmin = torch.argmin(action).item() # since actions are discrete, return index that has highest Q
+        tingmax = torch.argmax(action).item() # since actions are discrete, return index that has highest Q
+        #print("Max", tingmax)
+        #print("min", tingmin)
+        return tingmin # since actions are discrete, return index that has highest Q
 
 
     def learn2(self, state, next_state, action, reward, done):
@@ -200,7 +235,7 @@ class DQNAgent:
         self.onlineNet.optimizer.step()
         
 
-    def save_model(self, textFileName = 'model.txt', filename = './saveModel/'):
+    def save_model(self, fileName = 'model.txt', filePath = "./Algorithms/DQNGitTing/saveModel/"):
         """
         Function to save the policy network
         Parameters
@@ -212,9 +247,9 @@ class DQNAgent:
         none
         """
 
-        self.onlineNet.save_model(textFileName=textFileName, filename=filename)
+        self.onlineNet.save_model(fileName = filePath+fileName)
 
-    def load_model(self, textFileName = 'model.txt', filename = './saveModel/'):
+    def load_model(self, fileName = 'model.txt', filePath = './saveModel/'):
         """
         Function to load model parameters
         Parameters
@@ -226,4 +261,4 @@ class DQNAgent:
         none
         """
 
-        self.onlineNet.load_model(filename=filename, textFileName = textFileName, device=self.device)
+        self.onlineNet.load_model(device=self.device, fileName=filePath+fileName)
