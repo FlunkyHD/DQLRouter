@@ -26,7 +26,7 @@ class DQNNet(nn.Module):
         #  x Kunne være [0.5 , 0.8]
         return x
 
-    def save_model(self, textFileName = 'model.txt', filename = 'dql-router/Algorithms/DQNGitTing/saveModel/model.txt'):#Virker måske ikke. 
+    def save_model(self, textFileName = 'model.txt', filename = './saveModel/model.txt'):#Virker måske ikke. 
         """
         Function to save model parameters
 
@@ -42,7 +42,7 @@ class DQNNet(nn.Module):
 
         torch.save(self.state_dict(), filename + textFileName)
 
-    def load_model(self, device, textFileName = 'model.txt', filename = 'dql-router/Algorithms/DQNGitTing/saveModel/'):
+    def load_model(self, device, textFileName = 'model.txt', filename = './saveModel/'):
         """
         Function to load model parameters
 

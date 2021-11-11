@@ -200,7 +200,7 @@ class DQNAgent:
         self.onlineNet.optimizer.step()
         
 
-    def save_model(self, textFileName = 'model.txt', filename = 'dql-router/Algorithms/DQNGitTing/saveModel/'):
+    def save_model(self, textFileName = 'model.txt', filename = './saveModel/'):
         """
         Function to save the policy network
         Parameters
@@ -214,7 +214,7 @@ class DQNAgent:
 
         self.onlineNet.save_model(textFileName=textFileName, filename=filename)
 
-    def load_model(self, textFileName = 'model.txt', filename = 'dql-router/Algorithms/DQNGitTing/saveModel/'):
+    def load_model(self, textFileName = 'model.txt', filename = './saveModel/'):
         """
         Function to load model parameters
         Parameters
