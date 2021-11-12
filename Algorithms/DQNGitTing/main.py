@@ -243,6 +243,40 @@ def makeLeftRightGraph() :
     graph.append(node4)
     return graph
 
+def makeGridGraphWithlength(length) :
+    completeGraph = []
+    nodeArr = []
+    for i in range (length*length) :
+        nodeArr.append(Node(name=i))
+    
+    for k in range (4) : 
+        for i in range (length) : 
+            for j in range (length) : 
+                if k == 0 : 
+                    if j % length == 0 : #Her får vi de mest venstre noder. 
+                        nodeArr[j + i*length].addConnection(Road(1000, nodeArr[j + i*length], str(j + i*length) +"-"+ str(j + i*length)  ))
+                    else :
+                        nodeArr[j+i*length].addConnection(Road(2, nodeArr[j+(i*length)-1], str(j+i*length) +"-"+ str(j+(i*length)-1)))
+                elif k == 1 :
+                    if i == 0 : 
+                         nodeArr[j].addConnection(Road(1000, nodeArr[j], str(j) + "-"+str(j)))
+                    else :
+                        nodeArr[j+i*length].addConnection(Road(2, nodeArr[j+(i-1)*length], str(j+i*length) +"-"+ str(j+(i-1)*length))) 
+                elif k == 2 :
+                    if j +1 == length :  
+                        nodeArr[j + i*length].addConnection(Road(1000, nodeArr[j + i*length], str(j + i*length) +"-"+ str(j + i*length)))
+                    else :
+                        nodeArr[j+i*length].addConnection(Road(2, nodeArr[j+(i*length)+1], str(j + i*length) +"-"+ str(j + i*length +1)))
+                elif k == 3 :
+                    if (i + 1) == length : 
+                         nodeArr[j + i*length].addConnection(Road(1000, nodeArr[j + i*length], str(j + i*length) + "-"+str(j + i*length)))
+                    else :
+                        nodeArr[j+i*length].addConnection(Road(2, nodeArr[j+(i+1)*length], str(j + i*length) + "-"+str(j + (i+1)*length))) 
+                               
+    for i in range (length*length) :
+        completeGraph.append(nodeArr[i])  
+    return completeGraph
+
 def makeGridGraph() :
     graph = []
     node0 = Node(False, 0)
@@ -320,15 +354,18 @@ def procesInput(input) :
     actionsSpace = 4
     fileName = ""
 
-    if(len(input) <= 7) :
-        print("Wrong amount of inputs: THe format is: Print: which is how often it prints(0-ininity)\n",
+    if(len(input) != 10) :
+        print("Wrong amount of inputs: THe format is:\n",
+              "Print: which is how often it prints(0-ininity)\n",
               "Graph, which specifies the graph being run(Grid, LeftRight).\n",
               "MaxGoals, which specifies the max amount of goals(1-len(graph)). Have to be above 0 and under the max number of nodes\n", 
               "FileName, Which says which file should be used(model.txt)\n",
               "RandomRest, which specifies wither it learns based on the same input, or it learns with random locatino and destinations(True, [0,0,1,0,0,1,0,0,0,0]\n", 
-              "MaxGoalCap, is a boolean, on weither the startstate should consists of the same amount of goals, or be random",
-              "LoadModel, wither it should load a given model, or start from a new(no, filename.txt)", 
-              "A default call is: 1000 Grid 6 GridNetwork.txt True False no")
+              "MaxGoalCap, is a boolean, on weither the startstate should consists of the same amount of goals, or be random\n",
+              "LoadModel, wither it should load a given model, or start from a new(no, filename.txt)\n",
+              "DiscountFactor(0.2-1)\n",
+              "EpisodeCount, which is amount of episodes(100000)\n",
+              "A default call is: 1000 Grid 6 GridNetwork.txt True False no 0.7 10000000")
         exit()
     
     doPrint = int(input[1])
@@ -358,16 +395,25 @@ def procesInput(input) :
     print(input, "Test")
     
     loadModel = input[7]
+    
+    discountFactor = float(input[8])
+    episodeCount = int(input[9])
         
         
-    return doPrint, graph, maxGoals, actionsSpace, fileName, randomReset, alwaysCapGoals, loadModel
+    return doPrint, graph, maxGoals, actionsSpace, fileName, randomReset, alwaysCapGoals, loadModel, discountFactor, episodeCount
 
+def printGridWithNodes(graph, length) : 
+    for i in range (length *length) : 
+        print(graph[i].name)
+        for j in range (4) : 
+            print(graph[i].connections[j].name)
+        print("\n")
+        
 
 if __name__ ==  '__main__':
     filePath = "./Algorithms/DQNGitTing/saveModel/" #Virker nødevendigt. 
-    doPrint, graph, maxGoals, actionsSpace, fileName, randomReset, alwaysCapGoals, loadModel = procesInput(sys.argv)
+    doPrint, graph, maxGoals, actionsSpace, fileName, randomReset, alwaysCapGoals, loadModel, discountFactor, episodeCount = procesInput(sys.argv)
 
-    
     np.random.seed()
     torch.manual_seed(1)
     
@@ -376,7 +422,7 @@ if __name__ ==  '__main__':
     dqn_agent = DQNAgent(device, 
                             inputSize=len(graph) * 2, 
                             actionSize=actionsSpace, 
-                            discount= 0.5, 
+                            discount= discountFactor, 
                             train_mode=True, 
                             eps_min = 0.01,
                             eps_max= 1)
@@ -386,10 +432,10 @@ if __name__ ==  '__main__':
     train(env=env, 
             dqn_agent=dqn_agent, 
             # results_basepath=args.results_folder, 
-            num_train_eps=1000, 
-            num_memory_fill_eps=200, 
-            update_frequency=20,
-            batchsize=5, 
+            num_train_eps=episodeCount, 
+            num_memory_fill_eps=20, 
+            update_frequency=1000,
+            batchsize=64, 
             fileName=fileName,
             filePath=filePath, 
             randomReset=randomReset, 

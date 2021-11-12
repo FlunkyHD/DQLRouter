@@ -3,7 +3,7 @@ import math
 import random
 random.seed(5)
 class Node:
-    def __init__(self, goal, name):
+    def __init__(self, goal = False, name ="noName"):
         self.connections = []
         self.currentCost = 0
         self.expectedCost = 0

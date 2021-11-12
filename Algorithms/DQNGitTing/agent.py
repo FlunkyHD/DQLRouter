@@ -22,8 +22,8 @@ class DQNAgent:
                     eps_max=1.0, 
                     eps_min=0.01, 
                     eps_decay=0.995, 
-                    memory_capacity=5000, 
-                    lr=1e-2, 
+                    memory_capacity=10000, 
+                    lr=1e-3, 
                     train_mode=True): #Discount skal muligvis være over 1. 
         self.device = device
 
