@@ -104,7 +104,7 @@ def train(env, dqn_agent, num_train_eps, num_memory_fill_eps, update_frequency, 
         ep_score = 0
 
         while not done:
-            #print(state)
+            # print(state)
             action = dqn_agent.select_action(state)
             #print(action)
             next_state, reward, done = env.step(state, action)
@@ -126,7 +126,6 @@ def train(env, dqn_agent, num_train_eps, num_memory_fill_eps, update_frequency, 
         if doPrint != 0 :
             if ep_cnt % doPrint == 0:  
                 print('Ep: {}, Total Steps: {}, Ep: Score: {}, Avg score: {}; Epsilon: {}'.format(ep_cnt, step_cnt, ep_score, current_avg_score, epsilon_history[-1]))
-
         if current_avg_score <= best_score:
             # dqn_agent.save_model('{}/dqn_model'.format(results_basepath))
             best_score = current_avg_score
@@ -359,7 +358,7 @@ def printGridWithNodes(graph, length) :
         
 
 if __name__ ==  '__main__':
-    filePath = "./DQNGitTing/saveModel/" #Virker nødevendigt. 
+    filePath = "./saveModel/" #Virker nødevendigt. 
     doPrint, graph, maxGoals, actionsSpace, fileName, randomReset, alwaysCapGoals, loadModel, discountFactor, episodeCount, shouldTrain = procesInput(sys.argv)
     np.random.seed()
     torch.manual_seed(1)
