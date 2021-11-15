@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from torch._C import Graph
-
+import math
 random.seed()
 
 class environment():
@@ -21,8 +21,8 @@ class environment():
        # thing = np.array([0,0,0,0,0,0,0,0,1,
         #                  1,0,0,0,0,0,0,0,0])
         graph = []
-        for i in range (34*34*2) :
-            if(i == 1155 or i == 1156) :
+        for i in range (2*2*2) :
+            if(i == 3 or i == 4) :
                 graph.append(1)
             else :
                 graph.append(0)
@@ -66,10 +66,22 @@ class environment():
                 state.append(1)
             else : 
                 state.append(0)
-                
+        print("state: \n", state)
         return state
         
-        
+    
+    def printGridAsGrid(self, state, length) :
+        #print("Goals and Locations. goal = 2, loc = 1")
+        offset = length*length
+        for i in range (length) : 
+            for j in range (length) :
+                if(state[j + i*length] == 1) : #Goals
+                    print("1 ", end = '')
+                elif(state[j+i*length+offset] == 1) :
+                    print("2 ", end = '')
+                else : 
+                    print("- ", end = '')
+            print()         
         
 
     def sampleAction(self):
@@ -82,7 +94,8 @@ class environment():
         for i in range(locOffset):
             if state[i + locOffset ] == 1 :
                 locId = i + locOffset
-        
+        #print("   ", action)
+        #self.printGridAsGrid(state, int(math.sqrt(len(state) / 2)))
         if locId == -1:
             raise Exception("No location found in input.")
 
@@ -98,8 +111,9 @@ class environment():
         state[locId] = 0
         state[nextNode.name + locOffset] = 1
         if state[nextNode.name] == 1:
-            #reward -= 10
+            reward -= 3
             state[nextNode.name] = 0
+
         return state, reward, self.isDone(state)
     
     

@@ -104,7 +104,7 @@ def train(env, dqn_agent, num_train_eps, num_memory_fill_eps, update_frequency, 
         ep_score = 0
 
         while not done:
-            # print(state)
+            #print(state)
             action = dqn_agent.select_action(state)
             #print(action)
             next_state, reward, done = env.step(state, action)
@@ -118,6 +118,7 @@ def train(env, dqn_agent, num_train_eps, num_memory_fill_eps, update_frequency, 
             state = next_state
             ep_score += reward
             step_cnt += 1
+            
 
         dqn_agent.update_epsilon()
 
@@ -126,6 +127,7 @@ def train(env, dqn_agent, num_train_eps, num_memory_fill_eps, update_frequency, 
         if doPrint != 0 :
             if ep_cnt % doPrint == 0:  
                 print('Ep: {}, Total Steps: {}, Ep: Score: {}, Avg score: {}; Epsilon: {}'.format(ep_cnt, step_cnt, ep_score, current_avg_score, epsilon_history[-1]))
+
         if current_avg_score <= best_score:
             # dqn_agent.save_model('{}/dqn_model'.format(results_basepath))
             best_score = current_avg_score
@@ -313,6 +315,28 @@ def makeGridGraph() :
     
     return graph
     
+def pruneGridGraph(state,nodeGraph ) :
+    offset = len(state)*len(state)
+    graphLength = len(state)/2
+    goalLocgraph = []
+    for i in range (graphLength) : 
+        if(state[i] == 1) :     #Adds the goals
+            goalLocgraph.append(1)
+        elif(state[i+offset] == 1) : #Adds the location
+            goalLocgraph.append(1)
+        else :
+            goalLocgraph.append(0)
+    
+    for i in range (len(goalLocgraph)) :
+        if(goalLocgraph[i] == 0) : #We have a node that should be pruned. 
+            removeNode = nodeGraph[i]
+            connections = removeNode.connections
+            for removeRoad in connections : 
+                for road in connections : 
+                    #nodeAddNewCoonection = 
+                    print("")
+            
+    
 def procesInput(input) : 
     
     if(len(input) != 6) :
@@ -322,7 +346,7 @@ def procesInput(input) :
               "LoadModel, wither it should load a given model, or start from a new(no, filename.txt)\n",
               "DiscountFactor(0.2-1)\n",
               "EpisodeCount, which is amount of episodes(100000)\n",
-              "A default call is: 25 34by341Loc.txt no 0.7 100000")
+              "A default call is: 1 4by44Loc.txt no 0.7 100000")
         exit()
     print(input, "Test")
     
@@ -333,9 +357,9 @@ def procesInput(input) :
     episodeCount = int(input[5])
         
     whichGraph = "Grid"        #USED FOR SPECIFING WHICH GRAPH.  "Grid"  "leftRight"
-    gridSize = 34
+    gridSize = 4
     maxGoals = 3                #Used for speciging the max amount of goals in the graph.     
-    randomReset = False          #Used to set if the reset should be random, so the loactino and goals are randomly placed
+    randomReset = True          #Used to set if the reset should be random, so the loactino and goals are randomly placed
     alwaysCapGoals = False      #Specifies if there should always be goals equal to the maxgoals, or if it should be fewer aswell
     shouldTrain = True
     
@@ -355,14 +379,25 @@ def printGridWithNodes(graph, length) :
         for j in range (4) : 
             print(graph[i].connections[j].name)
         print("\n")
-        
+
+def printGridAsGrid(state, length) :
+    print("Goals and Locations. goal = 2, loc = 1")
+    offset = length*length
+    for i in range (length) : 
+        for j in range (length) :
+            if(state[j + i*length] == 1) : #Goals
+                print("2", end = '')
+            elif(state[j+i*length+offset] == 1) :
+                print("1", end = '')
+            else : 
+                print("-", end = '')
+        print()        
 
 if __name__ ==  '__main__':
-    filePath = "./saveModel/" #Virker nødevendigt. 
+    filePath = "./DQNGitTing/saveModel/" #Virker nødevendigt. 
     doPrint, graph, maxGoals, actionsSpace, fileName, randomReset, alwaysCapGoals, loadModel, discountFactor, episodeCount, shouldTrain = procesInput(sys.argv)
     np.random.seed()
     torch.manual_seed(1)
-    
     env = environment(graph, actionsSpace)
     
     dqn_agent = DQNAgent(device, 

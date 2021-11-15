@@ -21,7 +21,7 @@ class DQNAgent:
                     discount=1.01,    
                     eps_max=1.0, 
                     eps_min=0.01, 
-                    eps_decay=0.995, 
+                    eps_decay=0.9999, 
                     memory_capacity=10000, 
                     lr=1e-2, 
                     train_mode=True): #Discount skal muligvis være over 1. 
