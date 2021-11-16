@@ -394,7 +394,7 @@ def printGridAsGrid(state, length) :
         print()        
 
 if __name__ ==  '__main__':
-    filePath = "./DQNGitTing/saveModel/" #Virker nødevendigt. 
+    filePath = "./saveModel/" #Virker nødevendigt. 
     doPrint, graph, maxGoals, actionsSpace, fileName, randomReset, alwaysCapGoals, loadModel, discountFactor, episodeCount, shouldTrain = procesInput(sys.argv)
     np.random.seed()
     torch.manual_seed(1)
